@@ -7,204 +7,45 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<!--标准mui.css-->
 		<link rel="stylesheet" type="text/css" href="css/mui.min.css">
-		<!--反馈页CSS-->
-		<link rel="stylesheet" type="text/css" href="css/feedback.css" />
 	</head>
 
 	<body class="mui-fullscreen" >
 		<header class="mui-bar mui-bar-nav">
-			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
-			<a id="submit" class="mui-btn mui-btn-blue mui-btn-link mui-pull-right">保存</a>
-			<h1 class="mui-title">添加外勤拜访</h1>
+			<h1 class="mui-title">示例</h1>
 		</header>
-		<div class="mui-content" id="fieldWorkPage">
-			<div class="mui-content-padded">
-				<div class="mui-inline">问题和意见</div>
-				<a class="mui-pull-right mui-inline" href="#popover">
-					快捷输入
-					<span class="mui-icon mui-icon-arrowdown"></span>
-				</a>
-				<!--快捷输入具体内容，开发者可自己替换常用语-->
-				<div id="popover" class="mui-popover">
-					<div class="mui-popover-arrow"></div>
-					<div class="mui-scroll-wrapper">
-						<div class="mui-scroll">
-							<ul class="mui-table-view">
-								<li class="mui-table-view-cell" v-for="(fastInput,index) in FAST_INPUTS">
-									<a @tap="setSummary(fastInput)" >{{fastInput.ITEM}}</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-
-				</div>
-			</div>
-			<div class="row mui-input-row">
-				<textarea id='question' class="mui-input-clear question" placeholder="输入拜访总结" v-model="SUMMARY" >
-					
-				</textarea>
-			</div>
-			<p>图片(选填,提供拜访相关图片,总大小10M以下)</p>
-			<div id='image-list' class="row image-list"></div>
-			<p>选择拜访客户</p>
-			<div class="row mui-input-row" style="height: 34px;" >
-				<input type="text" readonly="readonly" v-model="CUSTOMER_NAME" @tap="selectCustomer()" />
-			</div>
-			<p>下次拜访时间</p>
-			<div class="row mui-input-row" style="height: 34px;" >
-				<input type="text" readonly="readonly" v-model="NEXT_VISITDATE" @tap="selectNextVisitdate()" />
-			</div>
-			<p>当前位置</p>
-			<div class="row mui-input-row">
-				<p @tap="getVicinityAddress()">{{CURRENT_ADDRESS}}<span class="mui-icon mui-icon-right-nav mui-pull-right"></span></p>
-			</div>
+		<div class="mui-content">
 			
+			<ul class="mui-table-view mui-table-view-chevron" style="margin-top: 0;">
+				<li class="mui-table-view-cell mui-collapse"><a class="mui-navigate-right" href="#">文件上传</a>
+					<ul class="mui-table-view mui-table-view-chevron">
+						<li class="mui-table-view-cell">
+							<a class="mui-navigate-right" href="html/upload/imageUploadExample.html">图片上传</a>
+						</li>
+					</ul>
+				</li>
+				<li class="mui-table-view-cell mui-collapse"><a class="mui-navigate-right" href="#">日历控件</a>
+					<ul class="mui-table-view mui-table-view-chevron">
+						<li class="mui-table-view-cell">
+							<a class="mui-navigate-right" href="html/calendar/calendarExample.html">自定义日历内容控件</a>
+						</li>
+					</ul>
+				</li>
+				<li class="mui-table-view-cell mui-collapse"><a class="mui-navigate-right" href="#">定位</a>
+					<ul class="mui-table-view mui-table-view-chevron">
+						<li class="mui-table-view-cell">
+							<a class="mui-navigate-right" href="html/location/aliMapLocationExample.html">高德地图定位示例</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+
 		</div>
 			
 		<!-- MUI JS -->
 		<script src="js/mui.min.js"></script>
 		<!-- VUE JS -->
 		<script src="js/vue.min.js"></script>
-		<!-- 带图片表单提交Form公共JS -->
-		<script src="js/mui.form.upload.js"></script>
-		<script type="text/javascript">
-			
-			//开启右滑回退页面
-			mui.init({
-				swipeBack:true
-			});
-
-			mui.plusReady(function() {
-				
-				var submitBtn = document.getElementById("submit");
-				submitBtn.addEventListener("tap",function(){
-						mui.confirm('确认保存吗？','提示',['否', '是'], function(e) {
-							if (e.index == 1) {
-						        //signOut();
-						        doSubmit();
-						    }else{
-						        return;
-						    }
-						})
-				
-				});
-				
-				//获取当前位置
-				getAddress();
-				
-			});
-			
-			//当前城市编码
-			var currentCityCode = "";
-			
-			//当前位置经纬度
-			var currentLngLat = [];
-			
-			/**
-			 * 外勤拜访Vue对象 
-			 */
-			var fieldWorkVue = new Vue({
-				el:'#fieldWorkPage',
-				data:{
-					NEXT_VISITDATE:'',
-					SUMMARY:'',
-					CUSTOMER_ID:'',
-					CUSTOMER_NAME:'',
-					CURRENT_ADDRESS:'',
-					CURRENT_LOCATION:'',
-					FAST_INPUTS:[
-						{'ITEM':'客户对我们的方案很满意'},
-						{'ITEM':'我们的方案还需改进'},
-						{'ITEM':'客户接受了我们的方案'},
-						{'ITEM':'客户中断了与我司的合作'}
-					]
-				},
-				methods:{
-					selectCustomer:function(){
-						var selectCustomerUrl = "../../employee/listCustomerSupplier.html?CustomerYesOrNo=1&justSelect=1&callback=selectCustomerCallBack";
-						forward(selectCustomerUrl);
-					},
-					selectNextVisitdate:function(){
-						castapp.dateSelect({
-							defaultTime:'08:00',
-							callback:function(date){
-								fieldWorkVue.NEXT_VISITDATE = date;
-							}
-						});
-					},
-					getVicinityAddress: function() {
-						forward("../../comm/listAddressSearch.html?currentLngLat="+currentLngLat+"&currentCityCode="+currentCityCode+"&callback=addressSearchCallBack");
-					},
-					setSummary:function(fastInput){
-						fieldWorkVue.SUMMARY = fastInput.ITEM;
-						mui('.mui-popover').popover('hide');
-					}
-				}
-			});
-			
-			//初始化图片上传对象
-			uploadForm.initFormImgList({
-				imageList:'image-list',
-				isMultiple:true
-			});
-			
-			/**
-			 * 提交外勤
-			 */
-			function doSubmit(){
-				var fieldWorkParam = {
-					'SUMMARY':fieldWorkVue.SUMMARY,'NEXT_VISITDATE':fieldWorkVue.NEXT_VISITDATE,
-					'ADDRESS':fieldWorkVue.CURRENT_ADDRESS,'MAP_LOC':currentLngLat,
-					'CUSTOMER_ID':fieldWorkVue.CUSTOMER_ID,'RECORD_FLAG':'FIELDWORK_PHOTO'
-				}
-				uploadForm.createUpload("hrEmployeeFieldWork.api?method=edit&flag=add",fieldWorkParam);
-			}
-			
-			
-			//获取附近位置页面回调函数
-			function addressSearchCallBack(selectAddress){
-				selectAddress=evalObj(selectAddress);
-				fieldWorkVue.CURRENT_ADDRESS=selectAddress.address+selectAddress.name;
-				currentLngLat=[];
-				currentLngLat=selectAddress.location;
-				fieldWorkVue.CURRENT_LOCATION=currentLngLat;
-			}
-			
-			//获取位置
-			function getAddress() {
-				//高德地图API
-				//AMap.service解决只使用高德Geolocation功能提示Geolocation不是构造函数问题  
-				AMap.service(["AMap.Geolocation"],function(){
-					var geolocation = new AMap.Geolocation();
-					geolocation.getCurrentPosition(function(status,result) {
-						//console.log(str2Json(result));
-						if(status=="complete"){
-							fieldWorkVue.CURRENT_ADDRESS = result.formattedAddress;
-							fieldWorkVue.CURRENT_LOCATION =result.position.lng+","+result.position.lat; 
-							currentCityCode = result.addressComponent.citycode;
-							currentLngLat.push(result.position.lng);
-							currentLngLat.push(result.position.lat);
-						}else{
-							fieldWorkVue.CURRENT_ADDRESS = result.message;
-						}
-					});
-				});
-			}
-			
-			/**
-			 * 选择客户后的回调方法
-			 * @param {Object} data 所选客户
-			 */
-			function selectCustomerCallBack(data){
-				console.log(data);
-				//处理选择客户回调后等待框不关闭
-				ca.closeWaiting();
-				var data = evalObj(data);
-				fieldWorkVue.CUSTOMER_ID = data.ID;
-				fieldWorkVue.CUSTOMER_NAME = data.CUSTOMER_NAME;
-			}
-			
-		</script>
+		
 	</body>
 </html>
     
