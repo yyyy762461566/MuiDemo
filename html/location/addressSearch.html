@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="../../css/mui.min.css">
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">选择附近位置</h1>
+			<div id="addressSearch" class="mui-input-row mui-search" >
+				<input type="search" class="mui-input-clear" v-model="ADDRESS" >
+			</div>
+		</header>
+		<div class="mui-content">
+			<div id="pullrefresh" class="mui-content mui-scroll-wrapper" style="margin-top: 35px;">
+				<div class="mui-scroll">
+					<ul class="mui-table-view">
+						<li class="mui-table-view-cell" v-for="(address,index) in ADDRESS_LIST " @tap="exePageCallBack(address)">
+							{{address.address}}<br/> {{address.name}}
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../../js/mui.min.js"></script>
+		<script src="../../js/vue.min.js"></script>
+		<script src="../../js/mui.comm.js"></script>
+		<script src="../../js/castapp.js"></script>
+		<script src="../../js/mui.view.js"></script>
+		<script>
+			
+			ca.init();
+			
+			//城市编码默认北京
+			var currentCityCode = '010';
+			
+			//经纬度默认
+			var currentLngLat = [116.403981,39.915599];
+			
+			//页码
+			var addressPageIndex = 0;
+			
+			//每页记录条数
+			var addressPageSize = 20;
+			
+			mui.ready(function() {
+				
+				mui('#pullrefresh').pullRefresh();
+				
+				//为搜索框的清除图标添加监听,解决点击了清除图标清空了DOM的内容而VUE对象的内容不清空
+				mui(".mui-icon-clear")[0].addEventListener('tap',function(){
+				    searchVue.ADDRESS = '';
+				});
+				
+				
+				//初始化当前位置信息
+				initAddressInfo();
+				
+				//获取附近位置
+				getAddressListByPage();
+
+			});
+
+			mui.plusReady(function() {
+					
+				ca.refreshLoad('pullrefresh',
+					function(clearLoad) {
+						getAddressListByPage();
+						clearLoad();
+					},
+					function(dataState) {
+						getAddressListByPage();
+						dataState(false);
+					});
+				
+			});
+			
+			//附近位置Vue对象
+			var addressVue = new Vue({
+				el:'#pullrefresh',
+				data:{
+					ADDRESS_LIST:[]
+				},
+				methods: {
+					exePageCallBack: function(selectAddress) {
+						//若传递了回调函数这执行回调函数
+						var callback=getUrlParam('callback');
+						if(!isEmpty(callback)) {
+							var parentPage = plus.webview.currentWebview().opener();
+							parentPage.evalJS(callback+"('" +JSON.stringify(selectAddress)+ "')");
+							mui.back();
+						}else {
+							mui.back();
+						}
+					}
+				}
+			});
+			
+			//附近位置搜索Vue对象
+			var searchVue = new Vue({
+				el:'#addressSearch',
+				data:{
+					ADDRESS:''
+				},
+				methods: {
+					doSearch: function() {
+						//搜索前需将当前页码设置为0
+						var addressPageIndex = 0;
+						addressVue.ADDRESS_LIST=[];
+						getAddressListByPage();
+					}
+				},
+				watch: {
+					'ADDRESS':'doSearch'
+				}
+			});
+			
+			function getAddressListByPage(){
+				addressPageIndex++;
+				searchAddress(searchVue.ADDRESS,currentCityCode,currentLngLat,addressPageIndex,addressPageSize,'500');
+			}
+			
+			//初始化当前位置信息
+			function initAddressInfo(){
+				//从请求页面参数中获取当前位置经纬度，未获取到则使用默认坐标
+				currentLngLat = isEmpty(getUrlParam('currentLngLat')) ? currentLngLat:getUrlParam('currentLngLat');
+				currentCityCode = isEmpty(getUrlParam('currentCityCode')) ? currentCityCode:getUrlParam('currentCityCode');
+				
+			}
+			
+			/**
+			 * 获取附近位置
+			 * 使用高德地图web搜索服务接口,Api文档地址：http://lbs.amap.com/api/webservice/guide/api/search
+			 * @param {Object} keywords 搜索关键字
+			 * @param {Object} currentCityCode 当前城市编码
+			 * @param {Object} currentLngLat 当前经纬度
+			 * @param {Object} pageIndex 页码
+			 * @param {Object} pageSize 记录条数（强烈建议不超过25，若超过25可能造成访问报错）
+			 * @param {Object} radius 根据当前经纬度查询范围单位米
+			 */
+			function searchAddress(keywords,currentCityCode,currentLngLat,pageIndex,pageSize,radius) {
+				ca.get({
+					url: 'http://restapi.amap.com/v3/place/around?key=9f6b5dbf4f45f7cff6d6c4f35ee98dd3',
+					data: {
+						'keywords':keywords,
+						'city': currentCityCode,
+						'types': '公司企业|道路附属设施|公共设施|商务住宅|餐饮服务|购物服务|生活服务|交通设施服务|',
+						'location': currentLngLat,
+						'offset': pageSize,
+						'page': pageIndex,
+						'radius': radius
+					},
+					succFn: function(result) {
+						console.log(result);
+						var data = eval("(" + result + ")");
+						if(data.status == 1 && data.info === 'OK') {
+							//如果查询关键字为空则为刷新查询，不为空则代表关键字查询需重置位置列表
+							/*if(isEmpty(keywords)){
+								console.log("为空");*/
+								mui.each(data.pois,function(index,element){
+									addressVue.ADDRESS_LIST.push(element);
+								});
+							/*}else{
+								console.log("不为空");
+								addressVue.ADDRESS_LIST=data.pois;
+							}*/
+						}
+					}
+				});
+			}
+			
+			
+			
+		</script>
+	</body>
+
+</html>
