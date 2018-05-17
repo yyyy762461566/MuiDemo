@@ -125,5 +125,48 @@
 				}
 			}
 		}
+	},
+	"dependencies": {
+		"pages": {
+			"index.html": {
+				"resources": [],
+				"refer": [
+					"html/location/aliMapLocationExample.html"
+				],
+				"priority": 0
+			},
+			"html/location/aliMapLocationExample.html": {
+				"resources": [],
+				"refer": [
+					"html/location/addressSearch.html"
+				],
+				"priority": 0
+			},
+			"html/location/addressSearch.html": {
+				"resources": [],
+				"refer": [
+					"html/location/aliMapLocationExample.html"
+				],
+				"priority": 0
+			}
+		},
+		"idle": {
+			"resources": [
+				"js/mui.comm.js",
+				"css/feedback.css",
+				"fonts/mui.ttf",
+				"js/mui.form.upload1.js",
+				"html/calendar/calendarExample.html",
+				"js/vue.min.js",
+				"css/mui.css",
+				"js/vue-validator.js",
+				"js/mui.min.js",
+				"css/mui.min.css",
+				"html/upload/imageUploadExample.html",
+				"js/mui.form.upload.js",
+				"js/mui.js",
+				"README.md"
+			]
+		}
 	}
 }
